@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="stylesheet" type="text/css" href="css/style.css" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.9.3/simplepeer.min.js"
+      integrity="sha512-0j8yvyjRIWuD9DD6gIKgQArBwURjNZoud+kvmcJC4zmxusqjnrHS7jwUZIBASfoZ00H5TAJJM5RH7RbxOU0iig=="
+      crossorigin="anonymous"
+    ></script>
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="js/index_sp.js"></script>
+  </head>
+
+  <body>
+    <canvas id="bgCanvas"></canvas>
+    <canvas id="rainCanvas"></canvas>
+    <p id="myAudioValue">
+      my audio value：<span id="my-audio-value">null</span>
+    </p>
+    <div style="display: none">
+      <img id="bgImg" src="/images/bg.jpg" />
+      <img id="bgImg2" src="/images/bg2.jpg" />
+      <canvas id="cbCanvas"></canvas>
+    </div>
+
+    <div><audio id="myAudio" controls autoplay></audio><br /></div>
+    <!-- <audio autoplay></audio> -->
+  </body>
+</html>
