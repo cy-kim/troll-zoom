@@ -1,122 +1,38 @@
-let rainCanvas, rainCtx;
-let filterMode = 0;
-
-let myVolume = 0;
-
-let rainInit = [];
-let rainParticles = [];
-let volumeThresh = 20;
-let rainMax = 500;
-
-let audioStream = null;
+let myStream = null;
 //audio stuff
-
+let myVolume = 0;
 let simplepeers = [];
 var socket;
 
 // wait for window to load
 window.addEventListener("load", function () {
-  let rainCanvas = document.getElementById("rainCanvas");
-  let rainCtx = rainCanvas.getContext("2d");
-
-  rainCanvas.width = window.innerWidth;
-  rainCanvas.height = window.innerHeight;
-
-  rainCtx.strokeStyle = "rgba(255,255,255,0.4)";
-  rainCtx.lineWidth = 0.1;
-  rainCtx.lineCap = "butt";
-
-  for (let i = 0; i < rainMax; i++) {
-    rainInit.push({
-      x: Math.random() * rainCanvas.width,
-      y: Math.random() * rainCanvas.height,
-      l: 3,
-      xs: -4 + Math.random() * 4 + 2,
-      ys: Math.random() * 15 + 10,
-    });
-  }
-
-  for (let i = 0; i < rainMax; i++) {
-    rainParticles[i] = rainInit[i];
-  }
-
-  let bgCanvas = document.getElementById("bgCanvas");
-  let bgCtx = bgCanvas.getContext("2d");
-  let bgImg = document.getElementById("bgImg");
-  let bgImg2 = document.getElementById("bgImg2");
-
-  bgCanvas.width = window.innerWidth;
-  bgCanvas.height = window.innerHeight;
-
-  bgCtx.drawImage(bgImg, 0, 0, bgCanvas.width, bgCanvas.height);
-
-  // simplified canvas maniuplation func from http://html5doctor.com/video-canvas-magic/
-  // modified to have mulitple filters
-
-  function draw() {
-    setTimeout(function () {
-      rainCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-      //myVolume to be included in sum
-
-      let sumOfVolume = myVolume;
-      draw();
-
-      for (let peer of simplepeers) {
-        sumOfVolume += peer.mappedVolume;
-      }
-      if (sumOfVolume >= volumeThresh) {
-        bgCtx.drawImage(bgImg2, 0, 0, bgCanvas.width, bgCanvas.height);
-
-        for (let i = 0; i < rainParticles.length; i++) {
-          let rP = rainParticles[i];
-          rainCtx.beginPath();
-          rainCtx.moveTo(rP.x, rP.y);
-          rainCtx.lineTo(rP.x + rP.l * rP.xs, rP.y + rP.l * rP.ys);
-          rainCtx.stroke();
-          rainCtx.lineWidth = 5;
-        }
-      } else {
-        bgCtx.drawImage(bgImg, 0, 0, bgCanvas.width, bgCanvas.height);
-      }
-
-      move();
-    }, 0);
-  }
-
-  function move() {
-    for (let i = 0; i < rainParticles.length; i++) {
-      let p = rainParticles[i];
-      //p.x += p.xs;
-      p.y += p.ys;
-
-      if (p.x > rainCanvas.width || p.y > rainCanvas.height) {
-        p.x = Math.random() * rainCanvas.width;
-        p.y = -50;
-      }
-    }
-  }
-
   // Constraints - what do we want?
   let constraints = {
     audio: true,
-    video: false,
+    video: true,
   };
 
-  // Prompt the user for permission, get the stream
   navigator.mediaDevices
     .getUserMedia(constraints)
     .then(function (stream) {
+      myStream = stream;
       // separate audio and video so we can add audio to canvas prior to streaming to peers
-      audioStream = new MediaStream(stream.getAudioTracks());
+      const video = document.getElementById("myvideo");
+      video.srcObject = stream;
 
-      // Wait for the audio and video streams to load enough to play
-      myAudio.srcObject = audioStream;
-      myAudio.muted = true;
-
-      myAudio.onloadedmetadata = function (e) {
-        myAudio.play();
-        beginDetect();
+      // Wait for the stream to load enough to play
+      video.onloadedmetadata = function (e) {
+        video.play();
       };
+      const audioStream = new MediaStream(stream.getAudioTracks());
+      const audioContext = new (window.AudioContext ||
+        window.webkitAudioContext)();
+
+      const mediaStreamSource = audioContext.createMediaStreamSource(
+        audioStream
+      );
+      meter = createAudioMeter(audioContext);
+      mediaStreamSource.connect(meter);
 
       // Now setup socket
       setupSocket();
@@ -125,24 +41,8 @@ window.addEventListener("load", function () {
       /* Handle the error */
       alert(err);
     });
-
-  draw();
+  //draw();
 });
-
-var audioContext;
-var mediaStreamSource = null;
-var meter = null;
-
-function beginDetect() {
-  audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-      mediaStreamSource = audioContext.createMediaStreamSource(stream);
-      meter = createAudioMeter(audioContext);
-      mediaStreamSource.connect(meter);
-    });
-  }
-}
 
 function createAudioMeter(audioContext, clipLevel, averaging, clipLag) {
   const processor = audioContext.createScriptProcessor(512);
@@ -200,9 +100,15 @@ function volumeAudioProcess(event) {
   // want "fast attack, slow release."
   this.volume = Math.max(rms, this.volume * this.averaging);
   this.mappedVolume = Math.floor(mapRange(this.volume, 0, 1, 0, 50));
-  document.getElementById("myAudioValue").innerHTML = this.mappedVolume;
+  //document.getElementById("myAudioValue").innerHTML = this.mappedVolume;
   myVolume = this.mappedVolume;
-  //console.log(this.volume)
+  if (myVolume > 3) {
+    for (let i = 0; i < simplepeers.length; i++) {
+      if (simplepeers[i].hasConnected) {
+        simplepeers[i].simplepeer.send(JSON.stringify({ myVolume: myVolume }));
+      }
+    }
+  }
 }
 
 function mapRange(value, a, b, c, d) {
@@ -232,9 +138,8 @@ function setupSocket() {
     for (let i = 0; i < simplepeers.length; i++) {
       if (simplepeers[i].socket_id == data) {
         console.log("Removing simplepeer: " + i);
+        simplepeers[i].destroy();
         simplepeers.splice(i, 1);
-
-        document.getElementById(data).remove();
       }
     }
   });
@@ -245,12 +150,7 @@ function setupSocket() {
       // Make sure it's not us
       if (data[i] != socket.id) {
         // create a new simplepeer and we'll be the "initiator"
-        let simplepeer = new SimplePeerWrapper(
-          true,
-          data[i],
-          socket,
-          audioStream
-        );
+        let simplepeer = new SimplePeerWrapper(true, data[i], socket, myStream);
 
         // Push into our array
         simplepeers.push(simplepeer);
@@ -283,7 +183,7 @@ function setupSocket() {
     if (!found) {
       console.log("Never found right simplepeer object");
       // Let's create it then, we won't be the "initiator"
-      let simplepeer = new SimplePeerWrapper(false, from, socket, audioStream);
+      let simplepeer = new SimplePeerWrapper(false, from, socket, myStream);
 
       // Push into our array
       simplepeers.push(simplepeer);
@@ -293,18 +193,6 @@ function setupSocket() {
     }
   });
 }
-
-const playStream = (stream, volume) => {
-  let audio = document.querySelector("audio");
-
-  audio.srcObject = stream;
-  audio.volume = 0.9;
-  audio.muted = false;
-
-  audio.onloadedmetadata = function (e) {
-    audio.play();
-  };
-};
 
 // A wrapper for simplepeer as we need a bit more than it provides
 class SimplePeerWrapper {
@@ -326,10 +214,11 @@ class SimplePeerWrapper {
     // Initialize mediaStream to null
     this.peerStream = null;
 
-    this.volume = 0;
-    this.mappedVolume = 0;
+    this.peerVideo = null;
 
-    this.newVolume = null;
+    this.spokenFor = 0;
+
+    this.hasConnected = false;
 
     // simplepeer generates signals which need to be sent across socket
     this.simplepeer.on("signal", (data) => {
@@ -339,6 +228,7 @@ class SimplePeerWrapper {
     // When we have a connection, send our stream
     this.simplepeer.on("connect", () => {
       console.log("CONNECT");
+      this.hasConnected = true;
       //console.log(this.simplepeer);
 
       // Let's give them our stream
@@ -349,12 +239,23 @@ class SimplePeerWrapper {
 
     // Stream coming in to us
     this.simplepeer.on("stream", (stream) => {
-      //console.log('Incoming Stream');
-      console.log("Incoming stream", stream);
-      console.log(stream.getAudioTracks());
+      //console.log(stream.getAudioTracks());
 
       this.peerStream = stream;
+      const peerVideo = document.createElement("video");
+      peerVideo.id = this.socket_id;
+      peerVideo.height = 300;
+      peerVideo.width = 300;
+      peerVideo.classList.add("peervideo");
+      document.body.appendChild(peerVideo);
+      peerVideo.srcObject = stream;
+      // Wait for the stream to load enough to play
+      peerVideo.onloadedmetadata = function (e) {
+        peerVideo.play();
+      };
+      this.peerVideo = peerVideo;
 
+      /*
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
       playStream(this.peerStream, this.volume);
@@ -366,66 +267,17 @@ class SimplePeerWrapper {
 
       mediaStreamSource = audioContext.createMediaStreamSource(this.peerStream);
       meter = this.createAudioMeter(audioContext);
-      mediaStreamSource.connect(meter);
+      mediaStreamSource.connect(meter);*/
+    });
+
+    this.simplepeer.on("data", (data) => {
+      const { myVolume } = JSON.parse(data);
+      this.spokenFor += myVolume;
     });
   }
 
-  //https://codepen.io/huooo/pen/xJNPOL
-  createAudioMeter(audioContext, clipLevel, averaging, clipLag) {
-    const processor = audioContext.createScriptProcessor(256);
-    processor.onaudioprocess = (event) => {
-      const buf = event.inputBuffer.getChannelData(0);
-      const bufLength = buf.length;
-      let sum = 0;
-      let x;
-
-      // Do a root-mean-square on the samples: sum up the squares...
-      for (var i = 0; i < bufLength; i++) {
-        x = buf[i];
-        if (Math.abs(x) >= processor.clipLevel) {
-          processor.clipping = true;
-          processor.lastClip = window.performance.now();
-        }
-        sum += x * x;
-      }
-
-      // ... then take the square root of the sum.
-      const rms = Math.sqrt(sum / bufLength);
-
-      // Now smooth this out with the averaging factor applied
-      // to the previous sample - take the max here because we
-      // want "fast attack, slow release."
-      this.volume = Math.max(rms, this.volume * processor.averaging);
-      this.mappedVolume = Math.floor(mapRange(this.volume, 0, 1, 0, 50));
-
-      document.getElementById(this.socket_id).innerHTML = this.mappedVolume;
-    };
-
-    processor.clipping = false;
-    processor.lastClip = 0;
-    processor.volume = 0;
-    processor.clipLevel = clipLevel || 0.98;
-    processor.averaging = averaging || 0.95;
-    processor.clipLag = clipLag || 750;
-
-    processor.connect(audioContext.destination);
-
-    processor.checkClipping = function () {
-      if (!this.clipping) {
-        return false;
-      }
-      if (this.lastClip + this.clipLag < window.performance.now()) {
-        this.clipping = false;
-      }
-      return this.clipping;
-    };
-
-    processor.shutdown = function () {
-      this.disconnect();
-      this.onaudioprocess = null;
-    };
-
-    return processor;
+  destroy() {
+    document.body.removeChild(this.peerVideo);
   }
 
   inputsignal(sig) {

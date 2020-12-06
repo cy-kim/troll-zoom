@@ -12,20 +12,13 @@ app.get("/", function (req, res) {
 });
 
 // Here is the actual HTTP server
-// In this case, HTTPS (secure) server
-var https = require("https");
-
-// Security options - key and certificate
-var options = {
-  key: fs.readFileSync("star_itp_io.key"),
-  cert: fs.readFileSync("star_itp_io.pem"),
-};
+var http = require("http");
 
 // We pass in the Express object and the options object
-var httpServer = https.createServer(options, app);
+var httpServer = http.createServer(app);
 
 // Default HTTPS port
-httpServer.listen(443);
+httpServer.listen(8000);
 
 /* 
 This server simply keeps track of the peers all in one big "room"
@@ -76,13 +69,6 @@ io.sockets.on(
         console.log("never found peer");
       }
     });
-
-    //	socket.on("call-user", data => {
-    //    socket.to(data.to).emit("call-made", {
-    //      offer: data.offer,
-    //      socket: socket.id
-    //    });
-    //  });
 
     socket.on("disconnect", function () {
       console.log("Client has disconnected " + socket.id);

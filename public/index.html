@@ -8,11 +8,11 @@
       crossorigin="anonymous"
     ></script>
     <script type="text/javascript" src="/socket.io/socket.io.js"></script>
-    <script type="text/javascript" src="js/index_sp.js"></script>
+    <script type="text/javascript" src="js/index.js"></script>
   </head>
 
   <body>
-    <canvas id="bgCanvas"></canvas>
+    <!--<canvas id="bgCanvas"></canvas>
     <canvas id="rainCanvas"></canvas>
     <p id="myAudioValue">
       my audio value：<span id="my-audio-value">null</span>
@@ -23,7 +23,15 @@
       <canvas id="cbCanvas"></canvas>
     </div>
 
-    <div><audio id="myAudio" controls autoplay></audio><br /></div>
-    <!-- <audio autoplay></audio> -->
+    <div><br /></div>
+    <audio autoplay></audio> -->
+    <video
+      id="myvideo"
+      width="300"
+      height="300"
+      muted
+      class="peervideo"
+    ></video>
+    <audio id="myAudio" controls autoplay></audio>
   </body>
 </html>
