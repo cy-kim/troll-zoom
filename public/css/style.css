@@ -33,4 +33,5 @@
 .peervideo {
   clip-path: circle(50%);
   object-fit: cover;
+  transition: 0.1s ease;
 }

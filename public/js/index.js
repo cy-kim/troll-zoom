@@ -110,6 +110,7 @@ function volumeAudioProcess(event) {
         simplepeers[i].simplepeer.send(JSON.stringify({ myVolume: myVolume }));
       }
     }
+    resizeVideos();
   }
 }
 
@@ -118,6 +119,28 @@ function mapRange(value, a, b, c, d) {
   value = (value - a) / (b - a);
   // then map it from (0..1) to (c..d) and return it
   return c + value * (d - c);
+}
+
+function resizeVideos() {
+  const scale = d3.scalePow().exponent(0.8).domain([0, 1]).range([10, 500]);
+  let total =
+    mySpokenFor +
+    simplepeers.map((peer) => peer.spokenFor).reduce((a, b) => a + b, 0);
+
+  for (let i = 0; i < simplepeers.length; i++) {
+    console.log(
+      `${simplepeers[i].socket_id} - ${simplepeers[i].spokenFor} - ${
+        simplepeers[i].spokenFor / total
+      }%`
+    );
+    let el = document.getElementById(`${simplepeers[i].socket_id}`);
+    console.log(scale(simplepeers[i].spokenFor / total));
+    el.style.width = scale(simplepeers[i].spokenFor / total);
+    el.style.height = scale(simplepeers[i].spokenFor / total);
+  }
+  let el = document.getElementById("myvideo");
+  el.style.width = scale(mySpokenFor / total);
+  el.style.height = scale(mySpokenFor / total);
 }
 
 function setupSocket() {
@@ -275,31 +298,8 @@ class SimplePeerWrapper {
     this.simplepeer.on("data", (data) => {
       const { myVolume } = JSON.parse(data);
       this.spokenFor += myVolume;
-      this.resizeVideos();
+      resizeVideos();
     });
-  }
-
-  resizeVideos() {
-    const scale = d3.scaleLinear().domain([0, 1]).range([500, 10]);
-
-    let total =
-      mySpokenFor +
-      simplepeers.map((peer) => peer.spokenFor).reduce((a, b) => a + b);
-
-    for (let i = 0; i < simplepeers.length; i++) {
-      console.log(
-        `${simplepeers[i].socket_id} - ${simplepeers[i].spokenFor} - ${
-          simplepeers[i].spokenFor / total
-        }%`
-      );
-      let el = document.getElementById(`${simplepeers[i].socket_id}`);
-      console.log(scale(simplepeers[i].spokenFor / total));
-      el.style.width = scale(simplepeers[i].spokenFor / total);
-      el.style.height = scale(simplepeers[i].spokenFor / total);
-    }
-    let el = document.getElementById("myvideo");
-    el.style.width = scale(mySpokenFor / total);
-    el.style.height = scale(mySpokenFor / total);
   }
 
   destroy() {
