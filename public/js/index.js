@@ -122,7 +122,7 @@ function mapRange(value, a, b, c, d) {
 }
 
 function resizeVideos() {
-  const scale = d3.scalePow().exponent(0.8).domain([0, 1]).range([10, 500]);
+  const scale = d3.scalePow().exponent(0.8).domain([0, 1]).range([10, 1000]);
   let total =
     mySpokenFor +
     simplepeers.map((peer) => peer.spokenFor).reduce((a, b) => a + b, 0);
