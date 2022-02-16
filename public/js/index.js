@@ -29,9 +29,8 @@ window.addEventListener("load", function () {
       const audioContext = new (window.AudioContext ||
         window.webkitAudioContext)();
 
-      const mediaStreamSource = audioContext.createMediaStreamSource(
-        audioStream
-      );
+      const mediaStreamSource =
+        audioContext.createMediaStreamSource(audioStream);
       meter = createAudioMeter(audioContext);
       mediaStreamSource.connect(meter);
 
@@ -180,7 +179,7 @@ function setupSocket() {
         // Push into our array
         simplepeers.push(simplepeer);
 
-        //console.log(simplepeers);
+        console.log(simplepeers);
       }
     }
   });
