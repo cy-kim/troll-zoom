@@ -18,7 +18,7 @@ var http = require("http");
 var httpServer = http.createServer(app);
 
 // Default HTTPS port
-httpServer.listen(7000);
+httpServer.listen(process.env.PORT || 7000);
 
 /* 
 This server simply keeps track of the peers all in one big "room"
