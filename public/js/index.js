@@ -127,13 +127,13 @@ function resizeVideos() {
     simplepeers.map((peer) => peer.spokenFor).reduce((a, b) => a + b, 0);
 
   for (let i = 0; i < simplepeers.length; i++) {
-    console.log(
-      `${simplepeers[i].socket_id} - ${simplepeers[i].spokenFor} - ${
-        simplepeers[i].spokenFor / total
-      }%`
-    );
+    // console.log(
+    //   `${simplepeers[i].socket_id} - ${simplepeers[i].spokenFor} - ${
+    //     simplepeers[i].spokenFor / total
+    //   }%`
+    // );
     let el = document.getElementById(`${simplepeers[i].socket_id}`);
-    console.log(scale(simplepeers[i].spokenFor / total));
+    // console.log(scale(simplepeers[i].spokenFor / total));
     el.style.width = scale(simplepeers[i].spokenFor / total);
     el.style.height = scale(simplepeers[i].spokenFor / total);
   }

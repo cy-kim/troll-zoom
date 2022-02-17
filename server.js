@@ -1,3 +1,4 @@
+require("dotenv").config();
 // We need the file system here
 var fs = require("fs");
 
@@ -17,8 +18,9 @@ var http = require("http");
 // We pass in the Express object and the options object
 var httpServer = http.createServer(app);
 
+const port = process.env.PORT || 7000;
 // Default HTTPS port
-httpServer.listen(process.env.PORT || 7000);
+httpServer.listen(port, () => console.log(`server is running on port ${port}`));
 
 /* 
 This server simply keeps track of the peers all in one big "room"
