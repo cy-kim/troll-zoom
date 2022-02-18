@@ -256,7 +256,7 @@ class SimplePeerWrapper {
       //console.log(this.simplepeer);
 
       // Let's give them our stream
-      this.simplepeer.addStream(stream);
+      this.simplepeer.addStream(stream).catch(console.log("NOT STREAMING"));
 
       console.log("Send our stream");
     });
