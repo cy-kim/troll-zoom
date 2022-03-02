@@ -133,7 +133,7 @@ function resizeVideos() {
       }%`
     );
     let el = document.getElementById(`${simplepeers[i].socket_id}`);
-    console.log(scale(simplepeers[i].spokenFor / total));
+    // console.log(scale(simplepeers[i].spokenFor / total));
     el.style.width = scale(simplepeers[i].spokenFor / total);
     el.style.height = scale(simplepeers[i].spokenFor / total);
   }
